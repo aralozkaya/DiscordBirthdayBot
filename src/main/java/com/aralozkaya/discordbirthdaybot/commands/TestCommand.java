@@ -5,33 +5,44 @@ import discord4j.core.object.command.ApplicationCommandOption;
 import discord4j.discordjson.json.ApplicationCommandOptionChoiceData;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
 import discord4j.discordjson.json.ApplicationCommandRequest;
-import org.reactivestreams.Publisher;
+import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-public class TestCommand implements BotCommand {
+@Component
+public class TestCommand implements BaseCommand {
     private static final List<ApplicationCommandOptionChoiceData> choices = List.of(
             ApplicationCommandOptionChoiceData.builder()
-                    .name("test")
-                    .value("test")
+                    .name("test 1")
+                    .value("test1")
+                    .build(),
+            ApplicationCommandOptionChoiceData.builder()
+                    .name("test 2")
+                    .value("test2")
                     .build()
-    );;
+            );
 
     @Override
-    public Publisher<?> handler(ChatInputInteractionEvent event) {
-        return null;
+    public String getName() {
+        return "test";
     }
 
     @Override
-    public Publisher<?> handler() {
-        return Mono.empty();
+    public Boolean isAdminCommand() {
+        return false;
+    }
+
+    @Override
+    public Mono<Void> handle(ChatInputInteractionEvent event) {
+        return event.reply()
+                .withContent("Test Command Works!");
     }
 
     @Override
     public ApplicationCommandRequest build() {
         return ApplicationCommandRequest.builder()
-                .name("test")
+                .name(getName())
                 .description("A test command")
                 .addOption(ApplicationCommandOptionData.builder()
                         .name("test")
@@ -41,10 +52,5 @@ public class TestCommand implements BotCommand {
                         .choices(choices)
                         .build())
                 .build();
-    }
-
-    @Override
-    public void register() {
-
     }
 }
