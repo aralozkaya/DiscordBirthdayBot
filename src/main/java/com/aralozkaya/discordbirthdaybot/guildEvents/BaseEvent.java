@@ -5,8 +5,8 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 @Component
-public interface BaseEvent {
-    Class<? extends GuildEvent> eventClass();
+public interface BaseEvent<T extends GuildEvent> {
+    Class<T> getEventType();
 
-    Mono<Void> handle(GuildEvent event);
+    Mono<Void> handle(T event);
 }

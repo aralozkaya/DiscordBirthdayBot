@@ -1,6 +1,5 @@
 package com.aralozkaya.discordbirthdaybot.listeners;
 
-import com.aralozkaya.discordbirthdaybot.commands.BaseCommand;
 import com.aralozkaya.discordbirthdaybot.guildEvents.BaseEvent;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.guild.GuildEvent;
@@ -19,11 +18,11 @@ public class GuildEventListener {
         this.events = events;
     }
 
-    public Mono<Void> handle(GuildEvent event) {
+    public Mono handle(GuildEvent event) {
         //Convert our list to a flux that we can iterate through
         return Flux.fromIterable(events)
                 //Filter out all commands that don't match the name this event is for
-                .filter(e -> e.eventClass().equals(event.getClass()))
+                .filter(e -> e.getEventType().equals(event.getClass()))
                 //Get the first (and only) item in the flux that matches our filter
                 .next()
                 //Have our command class handle all logic related to its specific command.
