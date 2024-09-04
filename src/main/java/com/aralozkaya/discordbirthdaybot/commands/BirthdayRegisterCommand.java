@@ -1,28 +1,36 @@
 package com.aralozkaya.discordbirthdaybot.commands;
 
+import com.aralozkaya.discordbirthdaybot.dbo.Birthday;
+import com.aralozkaya.discordbirthdaybot.dbo.BirthdayId;
+import com.aralozkaya.discordbirthdaybot.repositories.BirthdaysRepository;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
+import discord4j.core.object.command.ApplicationCommandInteractionOption;
+import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
 import discord4j.core.object.command.ApplicationCommandOption;
+import discord4j.core.spec.InteractionApplicationCommandCallbackSpec;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
-import discord4j.discordjson.json.ApplicationCommandRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 
+@RequiredArgsConstructor
 @Component
 public class BirthdayRegisterCommand implements BaseCommand {
-    private final List<ApplicationCommandOptionData> options = List.of(
-            ApplicationCommandOptionData.builder()
-                    .name("role")
-                    .description("The role to assign")
-                    .required(true)
-                    .type(ApplicationCommandOption.Type.ROLE.getValue())
-                    .build()
-            );
+    private final BirthdaysRepository birthdaysRepository;
 
     @Override
     public String getName() {
         return "birthdayregister";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Enter your birth date to receive a special role on your birthday.";
     }
 
     @Override
@@ -31,16 +39,83 @@ public class BirthdayRegisterCommand implements BaseCommand {
     }
 
     @Override
-    public Mono<Void> handle(ChatInputInteractionEvent event) {
-        return null;
+    public List<ApplicationCommandOptionData> getOptions() {
+        return List.of(
+                ApplicationCommandOptionData.builder()
+                        .name("day")
+                        .description("your birthday day")
+                        .required(true)
+                        .type(ApplicationCommandOption.Type.INTEGER.getValue())
+                        .minValue(1.0)
+                        .maxValue(31.0)
+                        .build(),
+                ApplicationCommandOptionData.builder()
+                        .name("month")
+                        .description("your birthday month")
+                        .required(true)
+                        .type(ApplicationCommandOption.Type.INTEGER.getValue())
+                        .minValue(1.0)
+                        .maxValue(12.0)
+                        .build(),
+                ApplicationCommandOptionData.builder()
+                        .name("year")
+                        .description("your birthyear (optional)")
+                        .required(false)
+                        .type(ApplicationCommandOption.Type.INTEGER.getValue())
+                        .minValue(1900.0)
+                        .maxValue((double) LocalDateTime.now().getYear())
+                        .build()
+        );
     }
 
     @Override
-    public ApplicationCommandRequest build() {
-        return ApplicationCommandRequest.builder()
-                .name(getName())
-                .description("Enter your birth date to receive a special role on your birthday.")
-                .addAllOptions(options)
-                .build();
+    public Mono<Void> handle(ChatInputInteractionEvent event) {
+        int day = event.getOption("day")
+                .flatMap(ApplicationCommandInteractionOption::getValue)
+                .map(ApplicationCommandInteractionOptionValue::asLong)
+                .map(Long::intValue)
+                .get();
+
+        int month = event.getOption("month")
+                .flatMap(ApplicationCommandInteractionOption::getValue)
+                .map(ApplicationCommandInteractionOptionValue::asLong)
+                .map(Long::intValue)
+                .get();
+
+        int year = event.getOption("year")
+                .flatMap(ApplicationCommandInteractionOption::getValue)
+                .map(ApplicationCommandInteractionOptionValue::asLong)
+                .map(Long::intValue)
+                .orElse(1900);
+
+        try {
+            LocalDate birthdate = LocalDate.of(year, month, day);
+
+            Long guildID = event.getInteraction().getGuildId().get().asLong();
+            Long userID = event.getInteraction().getUser().getId().asLong();
+
+            BirthdayId birthdayId = new BirthdayId(guildID, userID);
+
+            birthdaysRepository.findById(birthdayId)
+                    .ifPresentOrElse(
+                            birthday -> {
+                                birthday.setBirthday(birthdate);
+                                birthdaysRepository.save(birthday);
+                            },
+                            () -> {
+                                Birthday birthday = new Birthday(birthdayId, birthdate);
+                                birthdaysRepository.save(birthday);
+                            }
+                    );
+        } catch (Exception e) {
+            return event.reply(InteractionApplicationCommandCallbackSpec.builder()
+                    .content("Invalid Date!")
+                    .ephemeral(true)
+                    .build());
+        }
+        return event.reply(InteractionApplicationCommandCallbackSpec.builder()
+                .content("Your birthday is set as: " + day + "th " + Month.of(month).name())
+                .ephemeral(true)
+                .build());
     }
 }
