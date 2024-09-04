@@ -8,10 +8,11 @@ import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
 import discord4j.core.object.command.ApplicationCommandOption;
 import discord4j.core.object.entity.Role;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
-import discord4j.discordjson.json.ApplicationCommandRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 @Component
@@ -24,8 +25,23 @@ public class RoleSelectCommand implements BaseCommand {
     }
 
     @Override
+    public String getDescription() {
+        return "Select the role you want to assign to users who have their birthday daily.";
+    }
+
+    @Override
     public Boolean isAdminCommand() {
         return true;
+    }
+
+    @Override
+    public List<ApplicationCommandOptionData> getOptions() {
+        return List.of(ApplicationCommandOptionData.builder()
+                .name("role")
+                .description("The role to assign")
+                .required(true)
+                .type(ApplicationCommandOption.Type.ROLE.getValue())
+                .build());
     }
 
     @Override
@@ -50,20 +66,6 @@ public class RoleSelectCommand implements BaseCommand {
                             assignedRoleRepository.save(assignedRole);
                         }
                 );
-        return Mono.empty();
-    }
-
-    @Override
-    public ApplicationCommandRequest build() {
-        return ApplicationCommandRequest.builder()
-                .name(getName())
-                .description("Select the role you want to assign to users who have their birthday daily.")
-                .addOption(ApplicationCommandOptionData.builder()
-                        .name("role")
-                        .description("The role to assign")
-                        .required(true)
-                        .type(ApplicationCommandOption.Type.ROLE.getValue())
-                        .build())
-                .build();
+        return event.reply("Role: " + role.getName() + " is selected!");
     }
 }
