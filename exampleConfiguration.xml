@@ -1,0 +1,18 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="DiscordBirthdayBotApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
+    <envs>
+      <env name="H2_DB_CONSOLE_ENABLED" value="" />
+      <env name="H2_DB_FILE" value="" />
+      <env name="H2_DB_PASS" value="" />
+      <env name="H2_DB_USER" value="" />
+      <env name="DISCORD_API_TOKEN" value="" />
+    </envs>
+    <module name="discordbirthdaybot" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="com.aralozkaya.discordbirthdaybot.DiscordBirthdayBotApplication" />
+    //Required in macOS
+    <option name="VM_PARAMETERS" value="-Djava.rmi.server.hostname=localhost" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
