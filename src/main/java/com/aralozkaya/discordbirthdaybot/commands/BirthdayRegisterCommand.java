@@ -3,10 +3,9 @@ package com.aralozkaya.discordbirthdaybot.commands;
 import com.aralozkaya.discordbirthdaybot.dbo.Birthday;
 import com.aralozkaya.discordbirthdaybot.dbo.BirthdayId;
 import com.aralozkaya.discordbirthdaybot.repositories.BirthdaysRepository;
+import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
-import discord4j.core.object.command.ApplicationCommandInteractionOption;
-import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
-import discord4j.core.object.command.ApplicationCommandOption;
+import discord4j.core.object.command.*;
 import discord4j.core.object.entity.Message;
 import discord4j.core.spec.InteractionApplicationCommandCallbackSpec;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
@@ -73,11 +72,9 @@ public class BirthdayRegisterCommand implements BaseCommand {
     public Mono<Void> handle(ChatInputInteractionEvent event) {
         int systemHour = LocalTime.now().getHour();
 
-        int userHour = event.getInteraction()
-                .getMessage()
-                .map(Message::getTimestamp)
-                .map(instant -> instant.get(ChronoField.HOUR_OF_DAY))
-                .get();
+        int userHour = event.getInteraction().getId()
+                .getTimestamp()
+                .get(ChronoField.HOUR_OF_DAY);
 
         int timeDifference = userHour - systemHour;
 
