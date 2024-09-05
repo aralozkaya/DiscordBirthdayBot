@@ -24,4 +24,6 @@ public class Birthday {
     @Column(name = "BIRTHDAY", nullable = false)
     private LocalDate birthday;
 
+    @Column(name = "TIMEDIFF", nullable = false)
+    private Integer timeDiff;
 }

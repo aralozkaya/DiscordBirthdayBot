@@ -2,8 +2,10 @@ package com.aralozkaya.discordbirthdaybot.dbo;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDate;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -20,4 +22,8 @@ public class Guild {
 
     @Column(name = "GUILD_BOT_ROLE_ID", nullable = false)
     private Long guildBotRoleId;
+
+    @ColumnDefault("TRUE")
+    @Column(name = "ENABLED", nullable = false)
+    private Integer enabled;
 }
