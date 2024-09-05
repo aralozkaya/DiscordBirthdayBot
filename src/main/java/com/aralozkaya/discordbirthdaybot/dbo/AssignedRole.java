@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -17,6 +19,17 @@ public class AssignedRole {
     @Column(name = "GUILD_ID", nullable = false)
     private Long id;
 
+    @MapsId
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JoinColumn(name = "GUILD_ID", nullable = false)
+    private Guild guilds;
+
     @Column(name = "ROLE_ID", nullable = false)
     private Long roleId;
+
+    public AssignedRole(Long guildID, Long roleID) {
+        this.id = guildID;
+        this.roleId = roleID;
+    }
 }

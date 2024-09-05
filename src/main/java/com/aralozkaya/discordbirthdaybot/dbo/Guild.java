@@ -1,13 +1,19 @@
 package com.aralozkaya.discordbirthdaybot.dbo;
 
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.time.LocalDate;
 
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Getter
 @Setter
 @Entity
@@ -25,5 +31,11 @@ public class Guild {
 
     @ColumnDefault("TRUE")
     @Column(name = "ENABLED", nullable = false)
-    private Integer enabled;
+    private Boolean enabled = true;
+
+    public Guild(Long guildID, LocalDate now, Long roleID) {
+        this.id = guildID;
+        this.joinDate = now;
+        this.guildBotRoleId = roleID;
+    }
 }
