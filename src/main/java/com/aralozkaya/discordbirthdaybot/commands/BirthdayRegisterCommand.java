@@ -7,15 +7,16 @@ import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.command.ApplicationCommandInteractionOption;
 import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
 import discord4j.core.object.command.ApplicationCommandOption;
+import discord4j.core.object.entity.Message;
 import discord4j.core.spec.InteractionApplicationCommandCallbackSpec;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.Month;
+import java.time.*;
+import java.time.temporal.ChronoField;
+import java.time.temporal.TemporalField;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -70,6 +71,16 @@ public class BirthdayRegisterCommand implements BaseCommand {
 
     @Override
     public Mono<Void> handle(ChatInputInteractionEvent event) {
+        int systemHour = LocalTime.now().getHour();
+
+        int userHour = event.getInteraction()
+                .getMessage()
+                .map(Message::getTimestamp)
+                .map(instant -> instant.get(ChronoField.HOUR_OF_DAY))
+                .get();
+
+        int timeDifference = userHour - systemHour;
+
         int day = event.getOption("day")
                 .flatMap(ApplicationCommandInteractionOption::getValue)
                 .map(ApplicationCommandInteractionOptionValue::asLong)
@@ -88,31 +99,36 @@ public class BirthdayRegisterCommand implements BaseCommand {
                 .map(Long::intValue)
                 .orElse(1900);
 
+        LocalDate birthdate;
+
         try {
-            LocalDate birthdate = LocalDate.of(year, month, day);
-
-            Long guildID = event.getInteraction().getGuildId().get().asLong();
-            Long userID = event.getInteraction().getUser().getId().asLong();
-
-            BirthdayId birthdayId = new BirthdayId(guildID, userID);
-
-            birthdaysRepository.findById(birthdayId)
-                    .ifPresentOrElse(
-                            birthday -> {
-                                birthday.setBirthday(birthdate);
-                                birthdaysRepository.save(birthday);
-                            },
-                            () -> {
-                                Birthday birthday = new Birthday(birthdayId, birthdate);
-                                birthdaysRepository.save(birthday);
-                            }
-                    );
+            birthdate = LocalDate.of(year, month, day);
         } catch (Exception e) {
             return event.reply(InteractionApplicationCommandCallbackSpec.builder()
                     .content("Invalid Date!")
                     .ephemeral(true)
                     .build());
         }
+
+
+
+        Long guildID = event.getInteraction().getGuildId().get().asLong();
+        Long userID = event.getInteraction().getUser().getId().asLong();
+
+        BirthdayId birthdayId = new BirthdayId(guildID, userID);
+
+        birthdaysRepository.findById(birthdayId)
+                .ifPresentOrElse(
+                        birthday -> {
+                            birthday.setBirthday(birthdate);
+                            birthdaysRepository.save(birthday);
+                        },
+                        () -> {
+                            Birthday birthday = new Birthday(birthdayId, birthdate, timeDifference);
+                            birthdaysRepository.save(birthday);
+                        }
+                );
+
         return event.reply(InteractionApplicationCommandCallbackSpec.builder()
                 .content("Your birthday is set as: " + day + "th " + Month.of(month).name())
                 .ephemeral(true)
