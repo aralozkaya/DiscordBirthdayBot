@@ -3,6 +3,7 @@ package com.aralozkaya.discordbirthdaybot.listeners;
 import com.aralozkaya.discordbirthdaybot.commands.BaseCommand;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
+import discord4j.core.object.entity.PartialMember;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -26,6 +27,21 @@ public class CommandListener {
                 //Get the first (and only) item in the flux that matches our filter
                 .next()
                 //Have our command class handle all logic related to its specific command.
-                .flatMap(command -> command.handle(event));
+                .flatMap(command -> {
+                    if(command.isAdminCommand()) {
+                        boolean isAdmin = event.getInteraction().getMember()
+                                .map(PartialMember::getBasePermissions)
+                                .map(Mono::block)
+                                .map(permissions -> permissions.contains("MANAGE_ROLES"))
+                                .get();
+
+                        if(!isAdmin) {
+                            return event.reply()
+                                    .withEphemeral(true)
+                                    .withContent("You do not have the required permissions to use this command.");
+                        }
+                    }
+                    return command.handle(event);
+                });
     }
 }
