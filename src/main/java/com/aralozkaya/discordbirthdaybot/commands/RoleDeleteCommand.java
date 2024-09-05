@@ -1,12 +1,7 @@
 package com.aralozkaya.discordbirthdaybot.commands;
 
-import com.aralozkaya.discordbirthdaybot.dbo.AssignedRole;
 import com.aralozkaya.discordbirthdaybot.repositories.AssignedRolesRepository;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
-import discord4j.core.object.command.ApplicationCommandInteractionOption;
-import discord4j.core.object.command.ApplicationCommandInteractionOptionValue;
-import discord4j.core.object.command.ApplicationCommandOption;
-import discord4j.core.object.entity.Role;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
