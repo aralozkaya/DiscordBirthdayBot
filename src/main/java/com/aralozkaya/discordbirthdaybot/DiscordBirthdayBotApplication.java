@@ -7,10 +7,12 @@ import discord4j.rest.RestClient;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.util.Optional;
 
 @SpringBootApplication
+@EnableScheduling
 public class DiscordBirthdayBotApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(DiscordBirthdayBotApplication.class, args);
