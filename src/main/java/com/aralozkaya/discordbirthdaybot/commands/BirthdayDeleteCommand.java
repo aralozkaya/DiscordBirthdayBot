@@ -1,7 +1,10 @@
 package com.aralozkaya.discordbirthdaybot.commands;
 
 import com.aralozkaya.discordbirthdaybot.dbo.BirthdayId;
+import com.aralozkaya.discordbirthdaybot.dbo.CurrentBirthdayAssigneeId;
 import com.aralozkaya.discordbirthdaybot.repositories.BirthdaysRepository;
+import com.aralozkaya.discordbirthdaybot.repositories.CurrentBirthdayAssigneesRepository;
+import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.spec.InteractionApplicationCommandCallbackSpec;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
@@ -15,6 +18,7 @@ import java.util.List;
 @Component
 public class BirthdayDeleteCommand implements BaseCommand {
     private final BirthdaysRepository birthdaysRepository;
+    private final CurrentBirthdayAssigneesRepository currentBirthdayAssigneesRepository;
 
     @Override
     public String getName() {
@@ -44,11 +48,22 @@ public class BirthdayDeleteCommand implements BaseCommand {
         BirthdayId birthdayId = new BirthdayId(guildID, userID);
 
         if(birthdaysRepository.existsById(birthdayId)) {
+            event.deferReply()
+                    .withEphemeral(true)
+                    .block();
+            currentBirthdayAssigneesRepository
+                    .findById(new CurrentBirthdayAssigneeId(guildID, userID))
+                    .ifPresent(currentBirthdayAssignee -> {
+                        Snowflake roleID = Snowflake.of(currentBirthdayAssignee.getRoleId());
+                        event.getInteraction()
+                                .getMember()
+                                .map(member -> member.removeRole(roleID));
+                    });
             birthdaysRepository.deleteById(birthdayId);
-            return event.reply(InteractionApplicationCommandCallbackSpec.builder()
-                    .content("Your birthday data has been removed.")
-                    .ephemeral(true)
-                    .build());
+            return event.createFollowup()
+                    .withContent("Your birthday data has been removed!")
+                    .withEphemeral(true)
+                    .then();
         } else {
             return event.reply(InteractionApplicationCommandCallbackSpec.builder()
                     .content("You have not registered your birthday yet!")
