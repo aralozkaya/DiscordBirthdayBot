@@ -1,9 +1,9 @@
 package com.aralozkaya.discordbirthdaybot.scheduler;
 
-import com.aralozkaya.discordbirthdaybot.dbo.AssignedRole;
-import com.aralozkaya.discordbirthdaybot.dbo.BirthdayId;
+import com.aralozkaya.discordbirthdaybot.dbo.*;
 import com.aralozkaya.discordbirthdaybot.repositories.AssignedRolesRepository;
 import com.aralozkaya.discordbirthdaybot.repositories.BirthdaysRepository;
+import com.aralozkaya.discordbirthdaybot.repositories.CurrentBirthdayAssigneesRepository;
 import discord4j.common.util.Snowflake;
 import discord4j.core.GatewayDiscordClient;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +18,9 @@ public class BirthdayRoleSetScheduler {
     private final BirthdaysRepository birthdaysRepository;
     private final AssignedRolesRepository assignedRolesRepository;
     private final GatewayDiscordClient discordClient;
+    private final CurrentBirthdayAssigneesRepository currentBirthdayAssigneesRepository;
 
-    @Scheduled(cron = "0 * * * *")
+    @Scheduled(cron = "0 * * * * *")
     public void setBirthdayRoles() {
         birthdaysRepository.findAll().forEach(birthday -> {
             LocalDate userBirthday = birthday.getBirthday();
@@ -37,9 +38,22 @@ public class BirthdayRoleSetScheduler {
                     discordClient.getGuildById(guildId)
                             .flatMap(guild -> guild.getMemberById(userID))
                             .flatMap(member -> member.addRole(roleID))
-                            .subscribe();
+                            .block();
+
+                    CurrentBirthdayAssigneeId currentBirthdayAssigneeId =
+                            new CurrentBirthdayAssigneeId(id.getGuildId(), id.getUserId());
+                    CurrentBirthdayAssignee currentBirthdayAssignee =
+                            new CurrentBirthdayAssignee(
+                                    currentBirthdayAssigneeId,
+                                    birthday,
+                                    LocalDate.now(),
+                                    assignedRole.getRoleId()
+                            );
+
+                    currentBirthdayAssigneesRepository.save(currentBirthdayAssignee);
                 }
-                catch (Exception ignored) {
+                catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         });
