@@ -4,6 +4,7 @@ import com.aralozkaya.discordbirthdaybot.commands.BaseCommand;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.entity.PartialMember;
+import discord4j.rest.util.Permission;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -32,7 +33,7 @@ public class CommandListener {
                         boolean isAdmin = event.getInteraction().getMember()
                                 .map(PartialMember::getBasePermissions)
                                 .map(Mono::block)
-                                .map(permissions -> permissions.contains("MANAGE_ROLES"))
+                                .map(permissions -> permissions.contains(Permission.MANAGE_ROLES))
                                 .get();
 
                         if(!isAdmin) {
