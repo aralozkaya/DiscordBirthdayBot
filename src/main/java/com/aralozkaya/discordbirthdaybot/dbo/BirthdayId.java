@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.Hibernate;
 
+import java.io.Serial;
 import java.util.Objects;
 
 @AllArgsConstructor
@@ -16,6 +17,7 @@ import java.util.Objects;
 @Setter
 @Embeddable
 public class BirthdayId implements java.io.Serializable {
+    @Serial
     private static final long serialVersionUID = -6418816410788186588L;
     @Column(name = "GUILD_ID", nullable = false)
     private Long guildId;
