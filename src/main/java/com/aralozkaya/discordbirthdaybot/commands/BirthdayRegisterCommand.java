@@ -2,11 +2,11 @@ package com.aralozkaya.discordbirthdaybot.commands;
 
 import com.aralozkaya.discordbirthdaybot.dbo.Birthday;
 import com.aralozkaya.discordbirthdaybot.dbo.BirthdayId;
+import com.aralozkaya.discordbirthdaybot.dbo.Guild;
 import com.aralozkaya.discordbirthdaybot.repositories.BirthdaysRepository;
-import discord4j.common.util.Snowflake;
+import com.aralozkaya.discordbirthdaybot.repositories.GuildsRepository;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.command.*;
-import discord4j.core.object.entity.Message;
 import discord4j.core.spec.InteractionApplicationCommandCallbackSpec;
 import discord4j.discordjson.json.ApplicationCommandOptionData;
 import lombok.RequiredArgsConstructor;
@@ -14,14 +14,13 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.time.*;
-import java.time.temporal.ChronoField;
-import java.time.temporal.TemporalField;
 import java.util.List;
 
 @RequiredArgsConstructor
 @Component
 public class BirthdayRegisterCommand implements BaseCommand {
     private final BirthdaysRepository birthdaysRepository;
+    private final GuildsRepository guildsRepository;
 
     @Override
     public String getName() {
@@ -70,14 +69,6 @@ public class BirthdayRegisterCommand implements BaseCommand {
 
     @Override
     public Mono<Void> handle(ChatInputInteractionEvent event) {
-        int systemHour = LocalTime.now().getHour();
-
-        int userHour = event.getInteraction().getId()
-                .getTimestamp()
-                .get(ChronoField.HOUR_OF_DAY);
-
-        int timeDifference = userHour - systemHour;
-
         int day = event.getOption("day")
                 .flatMap(ApplicationCommandInteractionOption::getValue)
                 .map(ApplicationCommandInteractionOptionValue::asLong)
@@ -121,7 +112,8 @@ public class BirthdayRegisterCommand implements BaseCommand {
                             birthdaysRepository.save(birthday);
                         },
                         () -> {
-                            Birthday birthday = new Birthday(birthdayId, birthdate, timeDifference);
+                            Guild guild = guildsRepository.findById(guildID).orElseThrow();
+                            Birthday birthday = new Birthday(birthdayId, guild, birthdate);
                             birthdaysRepository.save(birthday);
                         }
                 );
