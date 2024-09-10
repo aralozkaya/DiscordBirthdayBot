@@ -64,7 +64,10 @@ public class RoleSelectCommand implements BaseCommand {
                 .flatMap(PartialMember::getHighestRole)
                 .block();
 
-        if(botRole.getPosition().block() < selectedRole.getPosition().block()) {
+        int botRolePosition = botRole.getPosition().block();
+        int selectedRolePosition = selectedRole.getPosition().block();
+
+        if(botRolePosition < selectedRolePosition) {
             return event.reply()
                     .withContent("You can't select a role higher than the bot's role! " +
                     "Go to the server settings and put the targeted birthday role below the bot role")

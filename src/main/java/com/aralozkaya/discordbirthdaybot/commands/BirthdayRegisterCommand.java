@@ -1,10 +1,13 @@
 package com.aralozkaya.discordbirthdaybot.commands;
 
 import com.aralozkaya.discordbirthdaybot.dbo.Birthday;
-import com.aralozkaya.discordbirthdaybot.dbo.BirthdayId;
+import com.aralozkaya.discordbirthdaybot.dbo.Birthday.BirthdayId;
+import com.aralozkaya.discordbirthdaybot.dbo.CurrentBirthdayAssignee;
 import com.aralozkaya.discordbirthdaybot.dbo.Guild;
 import com.aralozkaya.discordbirthdaybot.repositories.BirthdaysRepository;
+import com.aralozkaya.discordbirthdaybot.repositories.CurrentBirthdayAssigneesRepository;
 import com.aralozkaya.discordbirthdaybot.repositories.GuildsRepository;
+import discord4j.common.util.Snowflake;
 import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
 import discord4j.core.object.command.*;
 import discord4j.core.spec.InteractionApplicationCommandCallbackSpec;
@@ -20,6 +23,7 @@ import java.util.List;
 @Component
 public class BirthdayRegisterCommand implements BaseCommand {
     private final BirthdaysRepository birthdaysRepository;
+    private final CurrentBirthdayAssigneesRepository currentBirthdayAssigneesRepository;
     private final GuildsRepository guildsRepository;
 
     @Override
@@ -98,25 +102,34 @@ public class BirthdayRegisterCommand implements BaseCommand {
                     .build());
         }
 
-
-
         Long guildID = event.getInteraction().getGuildId().get().asLong();
         Long userID = event.getInteraction().getUser().getId().asLong();
 
         BirthdayId birthdayId = new BirthdayId(guildID, userID);
 
         birthdaysRepository.findById(birthdayId)
-                .ifPresentOrElse(
-                        birthday -> {
-                            birthday.setBirthday(birthdate);
-                            birthdaysRepository.save(birthday);
-                        },
-                        () -> {
-                            Guild guild = guildsRepository.findById(guildID).orElseThrow();
-                            Birthday birthday = new Birthday(birthdayId, guild, birthdate);
-                            birthdaysRepository.save(birthday);
-                        }
-                );
+                .ifPresentOrElse(birthday -> {
+                    birthday.setBirthday(birthdate);
+                    LocalDate now = LocalDate.now();
+                    if(birthdate.getMonth() != now.getMonth() || birthdate.getDayOfMonth() != now.getDayOfMonth()) {
+                        currentBirthdayAssigneesRepository
+                                .findById(new CurrentBirthdayAssignee.CurrentBirthdayAssigneeId(guildID, userID))
+                                .ifPresent(currentBirthdayAssignee -> {
+                                    Snowflake roleID = Snowflake.of(currentBirthdayAssignee.getRoleId());
+                                    event.getInteraction()
+                                            .getGuild()
+                                            .flatMap(guild -> guild.getMemberById(Snowflake.of(userID)))
+                                            .flatMap(member -> member.removeRole(roleID))
+                                            .block();
+                                });
+                    }
+                    birthdaysRepository.save(birthday);
+                },
+                () -> {
+                    Guild guild = guildsRepository.findById(guildID).orElseThrow();
+                    Birthday birthday = new Birthday(birthdayId, guild, birthdate);
+                    birthdaysRepository.save(birthday);
+                });
 
         return event.reply(InteractionApplicationCommandCallbackSpec.builder()
                 .content("Your birthday is set as: " + day + "th " + Month.of(month).name())

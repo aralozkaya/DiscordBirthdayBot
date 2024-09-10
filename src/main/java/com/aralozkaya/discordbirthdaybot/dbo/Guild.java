@@ -26,16 +26,12 @@ public class Guild {
     @Column(name = "JOIN_DATE", nullable = false)
     private LocalDate joinDate;
 
-    @Column(name = "GUILD_BOT_ROLE_ID", nullable = false)
-    private Long guildBotRoleId;
-
     @ColumnDefault("TRUE")
     @Column(name = "ENABLED", nullable = false)
     private Boolean enabled = true;
 
-    public Guild(Long guildID, LocalDate now, Long roleID) {
+    public Guild(Long guildID, LocalDate now) {
         this.id = guildID;
         this.joinDate = now;
-        this.guildBotRoleId = roleID;
     }
 }

@@ -1,7 +1,7 @@
 package com.aralozkaya.discordbirthdaybot.commands;
 
-import com.aralozkaya.discordbirthdaybot.dbo.BirthdayId;
-import com.aralozkaya.discordbirthdaybot.dbo.CurrentBirthdayAssigneeId;
+import com.aralozkaya.discordbirthdaybot.dbo.Birthday.BirthdayId;
+import com.aralozkaya.discordbirthdaybot.dbo.CurrentBirthdayAssignee.CurrentBirthdayAssigneeId;
 import com.aralozkaya.discordbirthdaybot.repositories.BirthdaysRepository;
 import com.aralozkaya.discordbirthdaybot.repositories.CurrentBirthdayAssigneesRepository;
 import discord4j.common.util.Snowflake;
@@ -56,8 +56,10 @@ public class BirthdayDeleteCommand implements BaseCommand {
                     .ifPresent(currentBirthdayAssignee -> {
                         Snowflake roleID = Snowflake.of(currentBirthdayAssignee.getRoleId());
                         event.getInteraction()
-                                .getMember()
-                                .map(member -> member.removeRole(roleID));
+                                .getGuild()
+                                .flatMap(guild -> guild.getMemberById(Snowflake.of(userID)))
+                                .flatMap(member -> member.removeRole(roleID))
+                                .block();
                     });
             birthdaysRepository.deleteById(birthdayId);
             return event.createFollowup()

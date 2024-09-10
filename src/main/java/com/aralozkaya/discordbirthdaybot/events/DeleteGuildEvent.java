@@ -1,4 +1,4 @@
-package com.aralozkaya.discordbirthdaybot.guildEvents;
+package com.aralozkaya.discordbirthdaybot.events;
 
 import com.aralozkaya.discordbirthdaybot.repositories.GuildsRepository;
 import discord4j.core.event.domain.guild.GuildDeleteEvent;

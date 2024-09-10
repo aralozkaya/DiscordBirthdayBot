@@ -1,6 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="DiscordBirthdayBotApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
     <envs>
+      <env name="PORT" value="8080" />
       <env name="H2_DB_CONSOLE_ENABLED" value="" />
       <env name="H2_DB_FILE" value="" />
       <env name="H2_DB_PASS" value="" />

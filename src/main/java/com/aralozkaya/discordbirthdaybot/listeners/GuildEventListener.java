@@ -1,6 +1,6 @@
 package com.aralozkaya.discordbirthdaybot.listeners;
 
-import com.aralozkaya.discordbirthdaybot.guildEvents.BaseEvent;
+import com.aralozkaya.discordbirthdaybot.events.BaseEvent;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.guild.GuildEvent;
 import org.springframework.stereotype.Component;

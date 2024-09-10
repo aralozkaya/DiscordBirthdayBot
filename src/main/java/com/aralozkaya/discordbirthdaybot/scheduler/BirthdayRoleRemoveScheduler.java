@@ -1,6 +1,6 @@
 package com.aralozkaya.discordbirthdaybot.scheduler;
 
-import com.aralozkaya.discordbirthdaybot.dbo.CurrentBirthdayAssigneeId;
+import com.aralozkaya.discordbirthdaybot.dbo.CurrentBirthdayAssignee.CurrentBirthdayAssigneeId;
 import com.aralozkaya.discordbirthdaybot.repositories.CurrentBirthdayAssigneesRepository;
 import discord4j.common.util.Snowflake;
 import discord4j.core.GatewayDiscordClient;
@@ -18,7 +18,7 @@ public class BirthdayRoleRemoveScheduler {
 
     @Scheduled(cron = "0 * * * * *")
     public void removeBirthdayRoles() {
-        currentBirthdayAssigneesRepository.findAll().forEach(assignee -> {
+        currentBirthdayAssigneesRepository.getAllByBirthdays_Guild_Enabled(true).forEach(assignee -> {
             CurrentBirthdayAssigneeId id = assignee.getId();
 
             Snowflake guildId = Snowflake.of(id.getGuildId());
@@ -36,12 +36,12 @@ public class BirthdayRoleRemoveScheduler {
                             .flatMap(guild -> guild.getMemberById(userID))
                             .flatMap(member -> member.removeRole(roleID))
                             .block();
-
-                    currentBirthdayAssigneesRepository.delete(assignee);
                 }
                 catch (Exception e) {
                     e.printStackTrace();
                 }
+
+                currentBirthdayAssigneesRepository.delete(assignee);
             }
         });
     }

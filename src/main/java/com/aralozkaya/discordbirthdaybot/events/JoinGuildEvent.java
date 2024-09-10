@@ -1,4 +1,4 @@
-package com.aralozkaya.discordbirthdaybot.guildEvents;
+package com.aralozkaya.discordbirthdaybot.events;
 
 import com.aralozkaya.discordbirthdaybot.dbo.Guild;
 import com.aralozkaya.discordbirthdaybot.repositories.GuildsRepository;
@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
-import java.util.Objects;
 
 @RequiredArgsConstructor
 @Component
@@ -23,14 +22,7 @@ public class JoinGuildEvent implements BaseEvent<GuildCreateEvent> {
     @Override
     public Mono<Void> handle(GuildCreateEvent event) {
         Long guildID = event.getGuild().getId().asLong();
-        Long roleID = Objects.requireNonNull(
-                Objects.requireNonNull(
-                        event.getGuild().getSelfMember()
-                                .block()
-                ).getRoles().next()
-                        .block()
-        ).getId().asLong();
-        Guild guild = new Guild(guildID, LocalDate.now(), roleID);
+        Guild guild = new Guild(guildID, LocalDate.now());
         guildsRepository.save(guild);
         return Mono.empty();
     }
