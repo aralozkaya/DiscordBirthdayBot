@@ -14,6 +14,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Component
@@ -43,6 +44,9 @@ public class BirthdayRoleSetScheduler {
                         discordGuild.getMemberById(userID)
                                 .flatMap(member -> member.addRole(roleID))
                                 .block();
+                        discordGuild.getSystemChannel()
+                                .flatMap(channel -> channel.createMessage("Heyooo! Everyone say happy birthday to <@" + id.getUserId() + ">!"))
+                                .subscribe();
                     } catch (ClientException e) {
                         if(e.getStatus().compareTo(HttpResponseStatus.FORBIDDEN) == 0) {
                             discordGuild.getSystemChannel()
