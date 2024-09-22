@@ -97,7 +97,7 @@ public class BirthdayRoleSetScheduler {
                     );
             if (!celebrateUserIDs.isEmpty()){
                 discordGuild.getSystemChannel()
-                        .flatMap(channel -> channel.createMessage("Ayoo! Say happy birthday to:\n" + celebrateUserIDs))
+                        .flatMap(channel -> channel.createMessage("🎉 Ayoo! Say happy birthday to these lovely people 🎉\n" + celebrateUserIDs))
                         .subscribe();
             }
         });
