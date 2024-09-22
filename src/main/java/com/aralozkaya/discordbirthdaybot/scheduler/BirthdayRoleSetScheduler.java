@@ -14,6 +14,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -26,54 +28,77 @@ public class BirthdayRoleSetScheduler {
 
     @Scheduled(cron = "0 * * * * *")
     public void setBirthdayRoles() {
-        birthdaysRepository.getAllByGuild_Enabled(true).forEach(birthday -> {
-            LocalDate userBirthday = birthday.getBirthday();
-            LocalDate now = LocalDate.now();
+        HashMap<Long, List<Birthday>> birthdaysByGuild = new HashMap<>();
+        birthdaysRepository.getAllNotCurrentlyAssignedBirthdaysByGuild_Enabled(true).forEach(birthday -> {
+            if(birthdaysByGuild.containsKey(birthday.getId().getGuildId())) {
+                birthdaysByGuild.get(birthday.getId().getGuildId()).add(birthday);
+            } else {
+                birthdaysByGuild.put(birthday.getId().getGuildId(), List.of(birthday));
+            }
+        });
 
-            if (userBirthday.getDayOfMonth() == now.getDayOfMonth() && userBirthday.getMonth() == now.getMonth()) {
-                Birthday.BirthdayId id = birthday.getId();
-                Snowflake guildId = Snowflake.of(id.getGuildId());
-                Snowflake userID = Snowflake.of(id.getUserId());
+        birthdaysByGuild.keySet().forEach(guildId -> {
+            List<Birthday> birthdays = birthdaysByGuild.get(guildId);
+            List<Long> assignedUsers = new ArrayList<>();
+            Guild discordGuild = discordClient.getGuildById(Snowflake.of(guildId)).block();
 
-                try {
-                    AssignedRole assignedRole = assignedRolesRepository.findById(id.getGuildId()).orElseThrow();
-                    Snowflake roleID = Snowflake.of(assignedRole.getRoleId());
-                    Guild discordGuild = discordClient.getGuildById(guildId).block();
+            birthdays.forEach(birthday -> {
+                LocalDate userBirthday = birthday.getBirthday();
+                LocalDate now = LocalDate.now();
+
+                if (userBirthday.getDayOfMonth() == now.getDayOfMonth() && userBirthday.getMonth() == now.getMonth()) {
+                    Birthday.BirthdayId id = birthday.getId();
+                    Snowflake userID = Snowflake.of(id.getUserId());
 
                     try {
-                        discordGuild.getMemberById(userID)
-                                .flatMap(member -> member.addRole(roleID))
-                                .block();
-                        discordGuild.getSystemChannel()
-                                .flatMap(channel -> channel.createMessage("Heyooo! Everyone say happy birthday to <@" + id.getUserId() + ">!"))
-                                .subscribe();
-                    } catch (ClientException e) {
-                        if(e.getStatus().compareTo(HttpResponseStatus.FORBIDDEN) == 0) {
-                            discordGuild.getSystemChannel()
-                                    .flatMap(channel -> channel.createMessage("I can't assign the birthday role. " +
-                                            "The selected role might be higher than my role. " +
-                                            "Please check the role hierarchy. " +
-                                            "If the hierarchy looks correct, try moving the role up and down again."))
-                                    .subscribe();
-                        } else {
-                            e.printStackTrace();
+                        AssignedRole assignedRole = assignedRolesRepository.findById(guildId).orElseThrow();
+                        Snowflake roleID = Snowflake.of(assignedRole.getRoleId());
+
+                        try {
+                            discordGuild.getMemberById(userID)
+                                    .flatMap(member -> member.addRole(roleID))
+                                    .block();
+                            assignedUsers.add(userID.asLong());
+
+                            CurrentBirthdayAssignee.CurrentBirthdayAssigneeId currentBirthdayAssigneeId =
+                                    new CurrentBirthdayAssignee.CurrentBirthdayAssigneeId(id.getGuildId(), id.getUserId());
+                            CurrentBirthdayAssignee currentBirthdayAssignee =
+                                    new CurrentBirthdayAssignee(
+                                            currentBirthdayAssigneeId,
+                                            birthday,
+                                            LocalDate.now(),
+                                            assignedRole.getRoleId()
+                                    );
+
+                            currentBirthdayAssigneesRepository.save(currentBirthdayAssignee);
+                        } catch (ClientException e) {
+                            if(e.getStatus().compareTo(HttpResponseStatus.FORBIDDEN) == 0) {
+                                discordGuild.getSystemChannel()
+                                        .flatMap(channel -> channel.createMessage("I can't assign the birthday role. " +
+                                                "The selected role might be higher than my role. " +
+                                                "Please check the role hierarchy. " +
+                                                "If the hierarchy looks correct, try moving the role up and down again."))
+                                        .subscribe();
+                            } else {
+                                e.printStackTrace();
+                            }
                         }
                     }
-
-                    CurrentBirthdayAssignee.CurrentBirthdayAssigneeId currentBirthdayAssigneeId =
-                            new CurrentBirthdayAssignee.CurrentBirthdayAssigneeId(id.getGuildId(), id.getUserId());
-                    CurrentBirthdayAssignee currentBirthdayAssignee =
-                            new CurrentBirthdayAssignee(
-                                    currentBirthdayAssigneeId,
-                                    birthday,
-                                    LocalDate.now(),
-                                    assignedRole.getRoleId()
-                            );
-
-                    currentBirthdayAssigneesRepository.save(currentBirthdayAssignee);
+                    catch (Exception ignored) {
+                    }
                 }
-                catch (Exception ignored) {
-                }
+            });
+
+            String celebrateUserIDs = assignedUsers
+                    .stream()
+                    .reduce("",
+                            (acc, snowflake) -> acc + "<@"+ snowflake + ">\n",
+                            String::concat
+                    );
+            if (!celebrateUserIDs.isEmpty()){
+                discordGuild.getSystemChannel()
+                        .flatMap(channel -> channel.createMessage("Ayoo! Say happy birthday to:\n" + celebrateUserIDs))
+                        .subscribe();
             }
         });
     }
