@@ -1,0 +1,13 @@
+create schema if not exists birthdaybot;
+commit;
+create table if not exists birthdaybot.assigned_roles (guild_id bigint not null, role_id bigint not null, primary key (guild_id));
+create table if not exists birthdaybot.birthdays (user_id bigint not null, birthday date not null, GUILD_ID bigint not null, primary key (GUILD_ID, user_id));
+create table if not exists birthdaybot.current_birthday_assignees (guild_id bigint not null, user_id bigint not null, assigned_on date not null, role_id bigint not null, primary key (guild_id, user_id));
+create table if not exists birthdaybot.guilds (guild_id bigint not null, enabled boolean default TRUE not null, join_date date not null, primary key (guild_id));
+commit;
+alter table if exists birthdaybot.assigned_roles add constraint if not exists FKjwqj5vaivxd6tqd4q7b12irxs foreign key (guild_id) references birthdaybot.guilds on delete cascade;
+alter table if exists birthdaybot.birthdays add constraint if not exists  FK85bnu83u7oi5myeufxb4296qp foreign key (guild_id) references birthdaybot.guilds on delete cascade;
+alter table if exists birthdaybot.current_birthday_assignees add constraint if not exists  FKjhkhjf2hjnyyt7njalrqfwi2x foreign key (guild_id, user_id) references birthdaybot.birthdays on delete cascade;
+commit;
+create view if not exists birthdaybot.assignable_birthday_users as (select gs.guild_id, bds.user_id, bds.birthday, ars.role_id from birthdaybot.birthdays bds join birthdaybot.guilds gs on bds.guild_id = gs.guild_id join birthdaybot.assigned_roles ars on bds.guild_id = ars.guild_id left outer join birthdaybot.current_birthday_assignees cbas on cbas.guild_id = gs.guild_id and cbas.user_id = bds.user_id where gs.enabled = true and cbas.user_id is NULL and cbas.guild_id is NULL);
+commit;
