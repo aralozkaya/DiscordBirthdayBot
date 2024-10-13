@@ -23,7 +23,7 @@ public class CurrentBirthdayAssignee {
     private CurrentBirthdayAssigneeId id;
 
     @MapsId("id")
-    @OneToOne(fetch = FetchType.EAGER, optional = false, cascade = CascadeType.ALL)
+    @OneToOne(fetch = FetchType.EAGER, optional = false, cascade = CascadeType.MERGE)
     @JoinColumns({
             @JoinColumn(name = "USER_ID", referencedColumnName = "GUILD_ID", nullable = false),
             @JoinColumn(name = "GUILD_ID", referencedColumnName = "USER_ID", nullable = false)
