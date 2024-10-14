@@ -2,7 +2,8 @@ package com.aralozkaya.discordbirthdaybot;
 
 import discord4j.core.DiscordClientBuilder;
 import discord4j.core.GatewayDiscordClient;
-import discord4j.core.event.domain.interaction.ChatInputInteractionEvent;
+import discord4j.gateway.intent.Intent;
+import discord4j.gateway.intent.IntentSet;
 import discord4j.rest.RestClient;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -25,8 +26,11 @@ public class DiscordBirthdayBotApplication {
 				.orElseThrow(() -> new IllegalArgumentException("Environment variable" +
 						" DISCORD_API_TOKEN must be set for the bot to start."));
 
+		IntentSet intents = IntentSet.nonPrivileged().or(IntentSet.of(Intent.GUILD_MEMBERS));
+
 		return DiscordClientBuilder.create(DISCORD_API_TOKEN).build()
 				.gateway()
+				.setEnabledIntents(intents)
 				.login()
 				.block();
 	}

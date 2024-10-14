@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.aralozkaya</groupId>
 	<artifactId>discordbirthdaybot</artifactId>
-	<version>1.0.0</version>
+	<version>1.0.1</version>
 	<name>Discord Birthday Bot</name>
 	<properties>
 		<java.version>17</java.version>
